@@ -13,14 +13,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #09090b; color: #f4f4f5; }
-        .loader {
-            border: 3px solid rgba(250, 204, 21, 0.2);
-            border-top: 3px solid #facc15;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 0.8s linear infinite;
-        }
         .loader-dark {
             border: 3px solid rgba(9, 9, 11, 0.25);
             border-top: 3px solid #09090b;
@@ -35,6 +27,11 @@
             100% { opacity: 1; transform: scale(1) translateY(0); }
         }
         .animate-pop { animation: popIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes fadeOutSplash {
+            0% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
+        .splash-hide { animation: fadeOutSplash 0.45s ease forwards; }
         @media print {
             body { background: #fff !important; color: #000 !important; }
             .no-print { display: none !important; }
@@ -43,6 +40,18 @@
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col selection:bg-yellow-400 selection:text-zinc-950">
+
+    <!-- PANTALLA DE BIENVENIDA (SPLASH SCREEN) -->
+    <div id="splashScreen" class="fixed inset-0 bg-zinc-950 z-50 flex flex-col items-center justify-center p-6 no-print">
+        <div class="w-20 h-20 rounded-3xl bg-yellow-400 text-zinc-950 flex items-center justify-center text-4xl font-black shadow-2xl shadow-yellow-400/20 mb-4 animate-bounce">
+            <i class="fa-solid fa-clipboard-check"></i>
+        </div>
+        <h1 class="text-2xl font-black tracking-tight text-white">AUDITORÍA <span class="text-yellow-400">PDV</span></h1>
+        <p class="text-xs text-zinc-400 mt-1">Inteligencia de Precios y Exhibición en Campo</p>
+        <div class="w-36 h-1 bg-zinc-800 rounded-full overflow-hidden mt-6">
+            <div class="h-full bg-yellow-400 w-full animate-pulse"></div>
+        </div>
+    </div>
 
     <!-- BARRA SUPERIOR -->
     <header class="bg-zinc-900/95 backdrop-blur border-b border-zinc-800 sticky top-0 z-40 px-4 py-3 flex items-center justify-between no-print">
@@ -77,7 +86,7 @@
     </header>
 
     <!-- CONTENEDOR PRINCIPAL -->
-    <main class="flex-1 max-w-4xl w-full mx-auto p-4 pb-24">
+    <main class="flex-1 max-w-5xl w-full mx-auto p-4 pb-24">
 
         <!-- =============================================================== -->
         <!-- VISTA 1: LOGIN / REGISTRO / ACCESO ADMIN                        -->
@@ -158,7 +167,7 @@
             <form id="formAdmin" class="hidden space-y-4">
                 <div class="bg-zinc-950 border border-yellow-400/30 rounded-xl p-3 text-xs text-yellow-400 flex items-center gap-2.5">
                     <i class="fa-solid fa-shield-halved text-base"></i>
-                    <span>Acceso exclusivo para supervisión, descarga de reportes y revisión fotográfica.</span>
+                    <span>Acceso exclusivo para supervisión, comparativa de precios y descarga de reportes.</span>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Código de Administrador *</label>
@@ -186,12 +195,24 @@
                     </div>
                     <div>
                         <p class="text-sm font-bold text-yellow-400"><span id="pendingCount">0</span> reporte(s) pendientes de subir</p>
-                        <p class="text-xs text-zinc-400">Guardados en tu dispositivo. Se enviarán al detectar señal.</p>
+                        <p class="text-xs text-zinc-400">Guardados en el dispositivo. Se enviarán al detectar señal.</p>
                     </div>
                 </div>
                 <button onclick="sincronizarPendientes()" id="btnSyncManual"
                     class="bg-yellow-400 hover:bg-yellow-300 text-zinc-950 text-xs font-extrabold px-3.5 py-2 rounded-xl shrink-0 transition">
                     Subir ahora
+                </button>
+            </div>
+
+            <!-- BANNER DE ACCIÓN RÁPIDA MISMA TIENDA -->
+            <div id="mismaTiendaBanner" class="hidden bg-zinc-900 border border-zinc-700 rounded-2xl p-3.5 flex items-center justify-between gap-3 animate-pop">
+                <div class="text-xs">
+                    <span class="text-zinc-400">Última tienda auditada:</span>
+                    <strong id="ultimaTiendaTexto" class="text-yellow-400 ml-1"></strong>
+                </div>
+                <button type="button" onclick="reutilizarUltimaTienda()"
+                    class="bg-zinc-800 hover:bg-yellow-400 hover:text-zinc-950 text-yellow-400 border border-yellow-400/40 text-xs font-extrabold px-3 py-1.5 rounded-xl transition shrink-0">
+                    <i class="fa-solid fa-plus mr-1"></i> Otra marca aquí
                 </button>
             </div>
 
@@ -201,28 +222,37 @@
                     <h2 class="font-extrabold text-base text-white flex items-center gap-2">
                         <i class="fa-solid fa-store text-yellow-400"></i> Nuevo Levantamiento
                     </h2>
-                    <span id="fechaActualBadge" class="text-xs font-medium text-zinc-400 bg-zinc-950 px-2.5 py-1 rounded-lg border border-zinc-800"></span>
+                    <div class="flex items-center gap-2">
+                        <span id="gpsStatusBadge" class="text-[11px] font-semibold text-zinc-400 bg-zinc-950 px-2.5 py-1 rounded-lg border border-zinc-800">
+                            <i class="fa-solid fa-location-dot text-yellow-400 mr-1"></i>GPS Listo
+                        </span>
+                        <span id="fechaActualBadge" class="text-xs font-medium text-zinc-400 bg-zinc-950 px-2.5 py-1 rounded-lg border border-zinc-800"></span>
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Tienda / Punto de Venta *</label>
-                    <input type="text" id="tiendaNombre" required placeholder="Ej. Walmart Satélite / Chedraui Polanco"
-                        class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-400 transition">
+                <!-- Catálogo de Tienda / Punto de Venta -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase">Tienda / Punto de Venta *</label>
+                    <select id="tiendaSelect" required onchange="verificarTiendaPersonalizada()"
+                        class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-yellow-400 transition">
+                        <option value="">Selecciona tienda o sucursal...</option>
+                    </select>
+                    <input type="text" id="tiendaNombreManual" placeholder="Escribe el nombre de la cadena y sucursal..."
+                        class="hidden w-full bg-zinc-950 border border-yellow-400/60 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-400 transition">
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Marca de la Competencia *</label>
-                    <select id="marcaCompetencia" required
+                <!-- Marca de la Competencia -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase">Marca de la Competencia *</label>
+                    <select id="marcaCompetencia" required onchange="verificarMarcaPersonalizada()"
                         class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-yellow-400 transition">
                         <option value="">Selecciona una marca...</option>
-                        <option value="Marca Competidora A">Marca Competidora A</option>
-                        <option value="Marca Competidora B">Marca Competidora B</option>
-                        <option value="Marca Competidora C">Marca Competidora C</option>
-                        <option value="Marca Competidora D">Marca Competidora D</option>
-                        <option value="Otra Marca">Otra Marca (especificar en notas)</option>
                     </select>
+                    <input type="text" id="marcaNombreManual" placeholder="Escribe el nombre de la marca competidora..."
+                        class="hidden w-full bg-zinc-950 border border-yellow-400/60 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-400 transition">
                 </div>
 
+                <!-- Precio y Tipo de Acomodo -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Precio Detectado ($ MXN) *</label>
@@ -245,19 +275,55 @@
                     </div>
                 </div>
 
+                <!-- Conteo de Frentes (Share en Anaquel) y Promoción -->
+                <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-3.5 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-zinc-300 uppercase">Conteo de Frentes en Anaquel</span>
+                        <span id="sharePreviewBadge" class="text-[11px] font-extrabold text-yellow-400">Share: 50% vs 50%</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] text-zinc-400 uppercase font-bold">Nuestros Frentes</p>
+                                <p id="valFrentesPropios" class="text-base font-black text-white">1</p>
+                            </div>
+                            <div class="flex gap-1">
+                                <button type="button" onclick="ajustarFrentes('propios', -1)" class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white font-bold">-</button>
+                                <button type="button" onclick="ajustarFrentes('propios', 1)" class="w-7 h-7 rounded-lg bg-yellow-400 text-zinc-950 font-black">+</button>
+                            </div>
+                        </div>
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] text-zinc-400 uppercase font-bold">Frentes Competencia</p>
+                                <p id="valFrentesComp" class="text-base font-black text-yellow-400">1</p>
+                            </div>
+                            <div class="flex gap-1">
+                                <button type="button" onclick="ajustarFrentes('comp', -1)" class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white font-bold">-</button>
+                                <button type="button" onclick="ajustarFrentes('comp', 1)" class="w-7 h-7 rounded-lg bg-yellow-400 text-zinc-950 font-black">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <label class="flex items-center justify-between pt-1 cursor-pointer">
+                        <span class="text-xs text-zinc-300 font-semibold">¿Tiene promoción / precio de oferta activo?</span>
+                        <input type="checkbox" id="tienePromocion" class="w-4 h-4 accent-yellow-400 rounded">
+                    </label>
+                </div>
+
+                <!-- Observaciones -->
                 <div>
-                    <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Observaciones / Promociones</label>
-                    <textarea id="observaciones" rows="2" placeholder="Ej. Tiene etiqueta amarilla de oferta 2x1, frentes ganados..."
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Observaciones / Detalles de Oferta</label>
+                    <textarea id="observaciones" rows="2" placeholder="Ej. Etiqueta amarilla 2x1, material POP instalado, producto agotado..."
                         class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-400 transition"></textarea>
                 </div>
 
-                <!-- FOTOS (4 O MÁS) -->
+                <!-- FOTOS GUIADAS (4 O MÁS) -->
                 <div class="pt-2">
                     <div class="flex items-center justify-between mb-2">
                         <label class="text-xs font-semibold text-zinc-400 uppercase">
                             Evidencia Fotográfica (<span id="photoCounter" class="text-yellow-400 font-extrabold">0</span> fotos)
                         </label>
-                        <span class="text-[11px] text-zinc-500">Mín. 4 recomendadas • Sin límite</span>
+                        <span class="text-[11px] text-zinc-500">Mín. 4 recomendadas • Etiquetables</span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2.5 mb-3">
@@ -271,7 +337,7 @@
                         </label>
                     </div>
 
-                    <div id="previewGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-2.5"></div>
+                    <div id="previewGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
                 </div>
 
                 <button type="submit" id="btnGuardarReporte"
@@ -313,8 +379,8 @@
                     <p id="kpiTotalPromotores" class="text-2xl font-black text-white mt-1">0</p>
                 </div>
                 <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
-                    <p class="text-[11px] text-zinc-400 uppercase font-semibold">Total Fotos</p>
-                    <p id="kpiTotalFotos" class="text-2xl font-black text-yellow-400 mt-1">0</p>
+                    <p class="text-[11px] text-zinc-400 uppercase font-semibold">Share Promedio Propio</p>
+                    <p id="kpiSharePromedio" class="text-2xl font-black text-yellow-400 mt-1">0%</p>
                 </div>
                 <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
                     <p class="text-[11px] text-zinc-400 uppercase font-semibold">Precio Promedio</p>
@@ -322,42 +388,139 @@
                 </div>
             </div>
 
-            <!-- BARRA DE FILTROS Y EXPORTACIÓN -->
-            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 space-y-3 no-print">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <h2 class="text-base font-extrabold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-crown text-yellow-400"></i> Panel de Supervisión
-                    </h2>
-                    <div class="flex flex-wrap gap-2">
-                        <button onclick="cargarDatosAdmin()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-xs font-bold px-3 py-2 rounded-xl border border-zinc-700 transition">
-                            <i class="fa-solid fa-rotate mr-1 text-yellow-400"></i> Refrescar
-                        </button>
-                        <button onclick="exportarCSVAdmin()" class="bg-zinc-800 hover:bg-zinc-700 text-yellow-400 border border-yellow-400/40 text-xs font-bold px-3 py-2 rounded-xl transition">
-                            <i class="fa-solid fa-file-excel mr-1"></i> Excel / CSV
-                        </button>
-                        <button onclick="window.print()" class="bg-yellow-400 hover:bg-yellow-300 text-zinc-950 text-xs font-extrabold px-3 py-2 rounded-xl transition">
-                            <i class="fa-solid fa-print mr-1"></i> Imprimir / PDF
-                        </button>
+            <!-- SUBMENÚ DEL ADMINISTRADOR -->
+            <div class="flex flex-wrap gap-2 bg-zinc-900 p-1.5 rounded-2xl border border-zinc-800 no-print">
+                <button type="button" id="adminSubTabReportes" onclick="cambiarSubTabAdmin('reportes')"
+                    class="flex-1 py-2.5 px-3 text-xs font-extrabold rounded-xl bg-yellow-400 text-zinc-950 transition">
+                    <i class="fa-solid fa-list-check mr-1.5"></i>Auditorías y Fotos
+                </button>
+                <button type="button" id="adminSubTabComparativa" onclick="cambiarSubTabAdmin('comparativa')"
+                    class="flex-1 py-2.5 px-3 text-xs font-bold rounded-xl text-zinc-400 hover:text-white transition">
+                    <i class="fa-solid fa-chart-simple mr-1.5"></i>Comparativa Precios
+                </button>
+                <button type="button" id="adminSubTabCatalogos" onclick="cambiarSubTabAdmin('catalogos')"
+                    class="flex-1 py-2.5 px-3 text-xs font-bold rounded-xl text-zinc-400 hover:text-white transition">
+                    <i class="fa-solid fa-sliders mr-1.5"></i>Tiendas y Marcas
+                </button>
+            </div>
+
+            <!-- SECCIÓN ADMIN A: AUDITORÍAS, FILTROS Y EXPORTACIÓN -->
+            <div id="adminPanelReportes" class="space-y-4">
+                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 space-y-3 no-print">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h2 class="text-sm font-extrabold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-crown text-yellow-400"></i> Filtros y Exportación
+                        </h2>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="cargarDatosAdmin()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-xs font-bold px-3 py-2 rounded-xl border border-zinc-700 transition">
+                                <i class="fa-solid fa-rotate mr-1 text-yellow-400"></i> Refrescar
+                            </button>
+                            <button onclick="exportarCSVAdmin()" class="bg-zinc-800 hover:bg-zinc-700 text-yellow-400 border border-yellow-400/40 text-xs font-bold px-3 py-2 rounded-xl transition">
+                                <i class="fa-solid fa-file-excel mr-1"></i> Excel / CSV
+                            </button>
+                            <button onclick="exportarReporteHTMLConFotos()" class="bg-yellow-400 hover:bg-yellow-300 text-zinc-950 text-xs font-extrabold px-3 py-2 rounded-xl transition">
+                                <i class="fa-solid fa-file-pdf mr-1"></i> Reporte con Fotos
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <input type="text" id="filtroBusquedaAdmin" oninput="filtrarRegistrosAdmin()" placeholder="Buscar tienda, promotor o nota..."
+                            class="bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-yellow-400">
+                        <select id="filtroMarcaAdmin" onchange="filtrarRegistrosAdmin()"
+                            class="bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+                            <option value="">Todas las marcas</option>
+                        </select>
+                        <select id="filtroPromotorAdmin" onchange="filtrarRegistrosAdmin()"
+                            class="bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+                            <option value="">Todos los promotores</option>
+                        </select>
+                    </div>
+
+                    <!-- Rango de Fechas -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
+                        <div>
+                            <label class="block text-[10px] text-zinc-400 uppercase font-bold mb-1">Desde Fecha</label>
+                            <input type="date" id="filtroFechaInicio" onchange="filtrarRegistrosAdmin()"
+                                class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-400">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-zinc-400 uppercase font-bold mb-1">Hasta Fecha</label>
+                            <input type="date" id="filtroFechaFin" onchange="filtrarRegistrosAdmin()"
+                                class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-400">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1 flex items-end">
+                            <button type="button" onclick="limpiarFiltrosAdmin()"
+                                class="w-full bg-zinc-950 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 rounded-xl py-1.5 text-xs font-bold transition">
+                                Limpiar Filtros
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <input type="text" id="filtroBusquedaAdmin" oninput="filtrarRegistrosAdmin()" placeholder="Buscar tienda, promotor o nota..."
-                        class="bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-yellow-400">
-                    <select id="filtroMarcaAdmin" onchange="filtrarRegistrosAdmin()"
-                        class="bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
-                        <option value="">Todas las marcas</option>
-                    </select>
-                    <select id="filtroPromotorAdmin" onchange="filtrarRegistrosAdmin()"
-                        class="bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
-                        <option value="">Todos los promotores</option>
-                    </select>
+                <div id="adminListaReportes" class="space-y-3">
+                    <p class="text-xs text-zinc-400 text-center py-8">Cargando auditorías...</p>
                 </div>
             </div>
 
-            <!-- LISTADO DE REPORTES PARA ADMIN -->
-            <div id="adminListaReportes" class="space-y-3">
-                <p class="text-xs text-zinc-400 text-center py-8">Cargando auditorías...</p>
+            <!-- SECCIÓN ADMIN B: TABLA COMPARATIVA DE PRECIOS Y SHARE -->
+            <div id="adminPanelComparativa" class="hidden bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-scale-balanced text-yellow-400"></i> Análisis Comparativo por Marca Competidora
+                    </h3>
+                    <span class="text-[11px] text-zinc-400">Calculado sobre los filtros activos</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-zinc-800 text-zinc-400 uppercase text-[10px]">
+                                <th class="py-2.5 px-3">Marca</th>
+                                <th class="py-2.5 px-3">Registros</th>
+                                <th class="py-2.5 px-3">Precio Mín.</th>
+                                <th class="py-2.5 px-3">Precio Prom.</th>
+                                <th class="py-2.5 px-3">Precio Máx.</th>
+                                <th class="py-2.5 px-3">Share Frentes (Nuestro)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaComparativaBody" class="divide-y divide-zinc-800/80"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SECCIÓN ADMIN C: GESTIÓN DE CATÁLOGOS (TIENDAS Y MARCAS) -->
+            <div id="adminPanelCatalogos" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Gestión de Marcas -->
+                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-3">
+                    <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-tags text-yellow-400"></i> Catálogo de Marcas
+                    </h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="nuevaMarcaInput" placeholder="Nueva marca competidora..."
+                            class="flex-1 bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+                        <button type="button" onclick="agregarItemCatalogo('marcas')"
+                            class="bg-yellow-400 hover:bg-yellow-300 text-zinc-950 font-extrabold px-3.5 py-2 rounded-xl text-xs transition">
+                            Agregar
+                        </button>
+                    </div>
+                    <div id="listaCatalogoMarcas" class="space-y-1.5 max-h-64 overflow-y-auto pr-1"></div>
+                </div>
+
+                <!-- Gestión de Tiendas -->
+                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-3">
+                    <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-shop text-yellow-400"></i> Catálogo de Tiendas / Sucursales
+                    </h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="nuevaTiendaInput" placeholder="Ej. Chedraui Selecto Toreo..."
+                            class="flex-1 bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+                        <button type="button" onclick="agregarItemCatalogo('tiendas')"
+                            class="bg-yellow-400 hover:bg-yellow-300 text-zinc-950 font-extrabold px-3.5 py-2 rounded-xl text-xs transition">
+                            Agregar
+                        </button>
+                    </div>
+                    <div id="listaCatalogoTiendas" class="space-y-1.5 max-h-64 overflow-y-auto pr-1"></div>
+                </div>
             </div>
         </section>
     </main>
@@ -412,7 +575,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, doc, setDoc, deleteDoc, query, where, getDocs, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, getDoc, setDoc, deleteDoc, query, where, getDocs, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA16X9qaTv5Dn9esPcuPHAYkN9N7SrapzI",
@@ -432,14 +595,104 @@
 
         enableIndexedDbPersistence(db).catch(() => {});
 
+        // Ocultar Splash Screen suavemente
+        window.addEventListener("load", () => {
+            setTimeout(() => {
+                const splash = document.getElementById("splashScreen");
+                if (splash) splash.classList.add("splash-hide");
+            }, 900);
+        });
+
+        // =================================================================
+        // CATÁLOGOS PREDETERMINADOS (SINCRONIZABLES CON FIRESTORE)
+        // =================================================================
+        const TIENDAS_DEFAULT = [
+            "Walmart Satélite", "Walmart Toreo", "Walmart Perisur", "Walmart Félix Cuevas",
+            "Chedraui Polanco", "Chedraui Santa Fe", "Chedraui Fuentes del Pedregal", "Chedraui Interlomas",
+            "Soriana Híper Echegaray", "Soriana Híper Miyana", "Soriana Súper Lomas",
+            "La Comer Tecamachalco", "La Comer Bosques de las Lomas", "La Comer Esmeralda",
+            "City Market Virreyes", "City Market Plaza Carso", "Bodegas Alianza Polanco", "Bodegas Alianza Satélite"
+        ];
+
+        const MARCAS_DEFAULT = [
+            "Marca Competidora A",
+            "Marca Competidora B",
+            "Marca Competidora C",
+            "Marca Competidora D"
+        ];
+
+        let catalogoTiendas = JSON.parse(localStorage.getItem("cat_tiendas_cache") || "null") || [...TIENDAS_DEFAULT];
+        let catalogoMarcas = JSON.parse(localStorage.getItem("cat_marcas_cache") || "null") || [...MARCAS_DEFAULT];
+
+        async function cargarCatalogosNube() {
+            try {
+                const snap = await getDoc(doc(db, "configuracion_app", "catalogos"));
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (Array.isArray(data.tiendas) && data.tiendas.length) {
+                        catalogoTiendas = data.tiendas;
+                        localStorage.setItem("cat_tiendas_cache", JSON.stringify(catalogoTiendas));
+                    }
+                    if (Array.isArray(data.marcas) && data.marcas.length) {
+                        catalogoMarcas = data.marcas;
+                        localStorage.setItem("cat_marcas_cache", JSON.stringify(catalogoMarcas));
+                    }
+                }
+            } catch (e) {
+                console.warn("Usando catálogos en caché local");
+            }
+            renderizarSelectsCatalogos();
+            renderizarListasCatalogosAdmin();
+        }
+
+        function renderizarSelectsCatalogos() {
+            const selTienda = document.getElementById("tiendaSelect");
+            const valTiendaActual = selTienda.value;
+            selTienda.innerHTML = `<option value="">Selecciona tienda o sucursal...</option>` +
+                catalogoTiendas.map(t => `<option value="${t}">${t}</option>`).join("") +
+                `<option value="__OTRA__">+ Otra tienda / sucursal no listada...</option>`;
+            if (valTiendaActual) selTienda.value = valTiendaActual;
+
+            const selMarca = document.getElementById("marcaCompetencia");
+            const valMarcaActual = selMarca.value;
+            selMarca.innerHTML = `<option value="">Selecciona una marca...</option>` +
+                catalogoMarcas.map(m => `<option value="${m}">${m}</option>`).join("") +
+                `<option value="__OTRA__">+ Otra marca competidora...</option>`;
+            if (valMarcaActual) selMarca.value = valMarcaActual;
+        }
+
+        window.verificarTiendaPersonalizada = function () {
+            const sel = document.getElementById("tiendaSelect").value;
+            const inputManual = document.getElementById("tiendaNombreManual");
+            if (sel === "__OTRA__") {
+                inputManual.classList.remove("hidden");
+                inputManual.required = true;
+                inputManual.focus();
+            } else {
+                inputManual.classList.add("hidden");
+                inputManual.required = false;
+            }
+        };
+
+        window.verificarMarcaPersonalizada = function () {
+            const sel = document.getElementById("marcaCompetencia").value;
+            const inputManual = document.getElementById("marcaNombreManual");
+            if (sel === "__OTRA__") {
+                inputManual.classList.remove("hidden");
+                inputManual.required = true;
+                inputManual.focus();
+            } else {
+                inputManual.classList.add("hidden");
+                inputManual.required = false;
+            }
+        };
+
         // =================================================================
         // REGISTRO DEL SERVICE WORKER E INSTALACIÓN DESCARGABLE (PWA)
         // =================================================================
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", () => {
-                navigator.serviceWorker.register("./sw.js")
-                    .then(() => console.log("Service Worker Offline activo"))
-                    .catch((err) => console.warn("SW no registrado:", err));
+                navigator.serviceWorker.register("./sw.js").catch(() => {});
             });
         }
 
@@ -447,14 +700,7 @@
         window.addEventListener("beforeinstallprompt", (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            const btn = document.getElementById("btnInstallApp");
-            btn.classList.remove("hidden");
-        });
-
-        window.addEventListener("appinstalled", () => {
-            deferredPrompt = null;
-            document.getElementById("btnInstallApp").classList.add("hidden");
-            mostrarToast("Aplicación instalada", "Ya puedes abrir Auditoría PDV desde tu pantalla de inicio sin internet.", "ok");
+            document.getElementById("btnInstallApp").classList.remove("hidden");
         });
 
         window.gestionarInstalacionApp = async function () {
@@ -464,7 +710,6 @@
                 if (outcome === "accepted") deferredPrompt = null;
                 return;
             }
-
             const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
             if (isStandalone) {
                 await mostrarModal({
@@ -475,11 +720,10 @@
                 });
                 return;
             }
-
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
             const instrucciones = isIOS
-                ? "En iPhone / iPad (Safari):\n1. Toca el botón Compartir (cuadro con flecha hacia arriba en la barra inferior).\n2. Desliza y selecciona 'Agregar a inicio'.\n3. Abre el ícono creado para trabajar sin internet."
-                : "Para descargar e instalar en tu equipo o celular:\n1. Abre el menú del navegador (⋮ arriba a la derecha en Chrome/Edge).\n2. Selecciona 'Instalar aplicación' o 'Agregar a la pantalla principal'.\n3. Asegúrate de abrirla desde HTTPS (ej. GitHub Pages) para habilitar la descarga directa.";
+                ? "En iPhone / iPad (Safari):\n1. Toca Compartir (cuadro con flecha hacia arriba).\n2. Selecciona 'Agregar a inicio'.\n3. Abre el ícono creado para trabajar sin internet."
+                : "Para descargar e instalar en tu celular o PC:\n1. Abre el menú del navegador (⋮ arriba a la derecha).\n2. Selecciona 'Instalar aplicación' o 'Agregar a la pantalla principal'.";
 
             await mostrarModal({
                 titulo: "Descargar App para uso Offline",
@@ -538,15 +782,12 @@
                 if (tipo === "danger") {
                     iconWrap.className = "w-11 h-11 rounded-xl bg-zinc-950 text-yellow-400 border border-yellow-400/50 flex items-center justify-center text-xl shrink-0";
                     icon.className = "fa-solid fa-trash-can";
-                    btnConfirm.className = "px-4 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-xs font-extrabold text-zinc-950 transition";
                 } else {
                     iconWrap.className = "w-11 h-11 rounded-xl bg-yellow-400/15 text-yellow-400 border border-yellow-400/30 flex items-center justify-center text-xl shrink-0";
                     icon.className = "fa-solid fa-circle-exclamation";
-                    btnConfirm.className = "px-4 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-xs font-extrabold text-zinc-950 transition";
                 }
 
                 btnCancel.style.display = soloAlerta ? "none" : "inline-block";
-
                 modal.classList.remove("hidden");
                 modal.classList.add("flex");
 
@@ -571,13 +812,15 @@
             if (!fotosArray || !fotosArray.length) {
                 grid.innerHTML = `<p class="text-xs text-zinc-400 col-span-2 text-center py-6">Este registro no contiene fotografías.</p>`;
             } else {
-                fotosArray.forEach((src, i) => {
+                fotosArray.forEach((item, i) => {
+                    const src = typeof item === "string" ? item : item.src;
+                    const etiqueta = typeof item === "string" ? `Fotografía #${i + 1}` : (item.etiqueta || `Fotografía #${i + 1}`);
                     const card = document.createElement("div");
                     card.className = "relative rounded-xl overflow-hidden border border-zinc-700 bg-zinc-950";
                     card.innerHTML = `
                         <img src="${src}" class="w-full h-64 object-contain bg-black">
                         <div class="px-3 py-2 bg-zinc-900 flex justify-between items-center text-[11px] border-t border-zinc-800">
-                            <span class="font-extrabold text-yellow-400">Fotografía #${i + 1}</span>
+                            <span class="font-extrabold text-yellow-400">#${i + 1} • ${etiqueta}</span>
                             <a href="${src}" download="evidencia_${i + 1}.jpg" class="text-zinc-200 hover:text-yellow-400 font-semibold transition">
                                 <i class="fa-solid fa-download mr-1"></i>Descargar
                             </a>
@@ -592,9 +835,8 @@
         };
 
         window.cerrarGaleria = function () {
-            const modal = document.getElementById("galleryModal");
-            modal.classList.add("hidden");
-            modal.classList.remove("flex");
+            document.getElementById("galleryModal").classList.add("hidden");
+            document.getElementById("galleryModal").classList.remove("flex");
         };
 
         // =================================================================
@@ -611,7 +853,6 @@
                 register: document.getElementById("tabRegister"),
                 admin: document.getElementById("tabAdmin")
             };
-
             Object.keys(forms).forEach(k => {
                 if (k === tab) {
                     forms[k].classList.remove("hidden");
@@ -624,12 +865,67 @@
         };
 
         // =================================================================
-        // INDEXEDDB OFFLINE
+        // INDEXEDDB OFFLINE + GPS + FRENTES + FOTOS ETIQUETADAS
         // =================================================================
         let usuarioActual = null;
-        let fotosSeleccionadas = [];
+        let fotosSeleccionadas = []; // [{ src, etiqueta }]
+        let frentesPropios = 1;
+        let frentesComp = 1;
+        let ultimaTiendaGuardada = null;
         let historialCachePromotor = [];
         let todosReportesAdmin = [];
+        let reportesFiltradosAdmin = [];
+
+        const ETIQUETAS_FOTOS_DEFAULT = [
+            "Anaquel General",
+            "Etiqueta de Precio",
+            "Exhibición / Cabecera",
+            "Frente Completo",
+            "Evidencia Adicional"
+        ];
+
+        window.ajustarFrentes = function (tipo, delta) {
+            if (tipo === "propios") {
+                frentesPropios = Math.max(0, frentesPropios + delta);
+                document.getElementById("valFrentesPropios").textContent = frentesPropios;
+            } else {
+                frentesComp = Math.max(0, frentesComp + delta);
+                document.getElementById("valFrentesComp").textContent = frentesComp;
+            }
+            const total = frentesPropios + frentesComp;
+            const pctPropio = total > 0 ? Math.round((frentesPropios / total) * 100) : 50;
+            const pctComp = 100 - pctPropio;
+            document.getElementById("sharePreviewBadge").textContent = `Share: ${pctPropio}% Nuestro vs ${pctComp}% Comp.`;
+        };
+
+        window.reutilizarUltimaTienda = function () {
+            if (!ultimaTiendaGuardada) return;
+            const sel = document.getElementById("tiendaSelect");
+            if (catalogoTiendas.includes(ultimaTiendaGuardada)) {
+                sel.value = ultimaTiendaGuardada;
+                verificarTiendaPersonalizada();
+            } else {
+                sel.value = "__OTRA__";
+                verificarTiendaPersonalizada();
+                document.getElementById("tiendaNombreManual").value = ultimaTiendaGuardada;
+            }
+            document.getElementById("marcaCompetencia").focus();
+            mostrarToast("Tienda cargada", `Listo para auditar otra marca en ${ultimaTiendaGuardada}.`, "info");
+        };
+
+        function obtenerCoordenadasGPS() {
+            return new Promise((resolve) => {
+                if (!("geolocation" in navigator)) return resolve(null);
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => resolve({
+                        lat: Number(pos.coords.latitude.toFixed(6)),
+                        lng: Number(pos.coords.longitude.toFixed(6))
+                    }),
+                    () => resolve(null),
+                    { enableHighAccuracy: true, timeout: 4500, maximumAge: 60000 }
+                );
+            });
+        }
 
         const DB_NAME = "AuditoriaOfflineDB";
         const STORE_NAME = "reportes_pendientes";
@@ -678,9 +974,6 @@
             });
         }
 
-        // =================================================================
-        // COMPRESIÓN Y GESTIÓN DE FOTOS (4 O MÁS)
-        // =================================================================
         function comprimirImagen(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -712,10 +1005,18 @@
             mostrarToast("Procesando imágenes", `Optimizando ${files.length} fotografía(s)...`, "info");
             for (const file of files) {
                 const base64 = await comprimirImagen(file);
-                fotosSeleccionadas.push(base64);
+                const idx = fotosSeleccionadas.length;
+                const etiquetaAuto = ETIQUETAS_FOTOS_DEFAULT[Math.min(idx, ETIQUETAS_FOTOS_DEFAULT.length - 1)];
+                fotosSeleccionadas.push({ src: base64, etiqueta: etiquetaAuto });
             }
             event.target.value = "";
             renderizarMiniaturas();
+        };
+
+        window.cambiarEtiquetaFoto = function (index, nuevaEtiqueta) {
+            if (fotosSeleccionadas[index]) {
+                fotosSeleccionadas[index].etiqueta = nuevaEtiqueta;
+            }
         };
 
         window.eliminarFoto = function (index) {
@@ -727,16 +1028,26 @@
             const grid = document.getElementById("previewGrid");
             document.getElementById("photoCounter").textContent = fotosSeleccionadas.length;
             grid.innerHTML = "";
-            fotosSeleccionadas.forEach((src, idx) => {
+            fotosSeleccionadas.forEach((fotoObj, idx) => {
                 const div = document.createElement("div");
-                div.className = "relative group rounded-xl overflow-hidden border border-zinc-700 aspect-square bg-zinc-950";
+                div.className = "rounded-xl overflow-hidden border border-zinc-700 bg-zinc-950 flex flex-col";
+                const opciones = ETIQUETAS_FOTOS_DEFAULT.map(et =>
+                    `<option value="${et}" ${fotoObj.etiqueta === et ? "selected" : ""}>${et}</option>`
+                ).join("");
+
                 div.innerHTML = `
-                    <img src="${src}" class="w-full h-full object-cover">
-                    <span class="absolute bottom-1 left-1 bg-black/80 text-[10px] px-1.5 py-0.5 rounded text-yellow-400 font-extrabold border border-zinc-700">#${idx + 1}</span>
-                    <button type="button" onclick="eliminarFoto(${idx})"
-                        class="absolute top-1 right-1 bg-zinc-950/90 hover:bg-yellow-400 text-white hover:text-zinc-950 border border-zinc-700 w-6 h-6 rounded-full text-xs flex items-center justify-center shadow transition">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
+                    <div class="relative aspect-square">
+                        <img src="${fotoObj.src}" class="w-full h-full object-cover">
+                        <span class="absolute bottom-1 left-1 bg-black/80 text-[10px] px-1.5 py-0.5 rounded text-yellow-400 font-extrabold border border-zinc-700">#${idx + 1}</span>
+                        <button type="button" onclick="eliminarFoto(${idx})"
+                            class="absolute top-1 right-1 bg-zinc-950/90 hover:bg-yellow-400 text-white hover:text-zinc-950 border border-zinc-700 w-6 h-6 rounded-full text-xs flex items-center justify-center shadow transition">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <select onchange="cambiarEtiquetaFoto(${idx}, this.value)"
+                        class="bg-zinc-900 text-[10px] text-zinc-200 px-1.5 py-1.5 border-t border-zinc-800 focus:outline-none">
+                        ${opciones}
+                    </select>
                 `;
                 grid.appendChild(div);
             });
@@ -764,6 +1075,7 @@
             document.getElementById("btnLogout").classList.remove("hidden");
             document.getElementById("fechaActualBadge").textContent = new Date().toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short" });
 
+            cargarCatalogosNube();
             actualizarBannerPendientes();
             cargarHistorial();
         }
@@ -781,6 +1093,7 @@
             document.getElementById("viewAdmin").classList.remove("hidden");
             document.getElementById("btnLogout").classList.remove("hidden");
 
+            cargarCatalogosNube();
             cargarDatosAdmin();
         }
 
@@ -913,6 +1226,21 @@
             e.preventDefault();
             if (!usuarioActual) return;
 
+            const selTienda = document.getElementById("tiendaSelect").value;
+            const tiendaFinal = selTienda === "__OTRA__"
+                ? document.getElementById("tiendaNombreManual").value.trim()
+                : selTienda;
+
+            const selMarca = document.getElementById("marcaCompetencia").value;
+            const marcaFinal = selMarca === "__OTRA__"
+                ? document.getElementById("marcaNombreManual").value.trim()
+                : selMarca;
+
+            if (!tiendaFinal || !marcaFinal) {
+                mostrarToast("Campos incompletos", "Selecciona o escribe la tienda y la marca.", "warn");
+                return;
+            }
+
             if (fotosSeleccionadas.length < 4) {
                 const continuar = await mostrarModal({
                     titulo: "Pocas fotografías adjuntas",
@@ -925,18 +1253,27 @@
 
             const btn = document.getElementById("btnGuardarReporte");
             btn.disabled = true;
-            btn.innerHTML = `<div class="loader-dark"></div> <span>Guardando...</span>`;
+            btn.innerHTML = `<div class="loader-dark"></div> <span>Obteniendo GPS y guardando...</span>`;
+
+            const coords = await obtenerCoordenadasGPS();
+            const totalFrentes = frentesPropios + frentesComp;
+            const sharePropio = totalFrentes > 0 ? Math.round((frentesPropios / totalFrentes) * 100) : 50;
 
             const reporte = {
                 idLocal: "rep_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7),
                 promotorUid: usuarioActual.uid,
                 promotorNombre: usuarioActual.nombre || usuarioActual.email,
                 promotorEmail: usuarioActual.email,
-                tienda: document.getElementById("tiendaNombre").value.trim(),
-                marcaCompetencia: document.getElementById("marcaCompetencia").value,
+                tienda: tiendaFinal,
+                marcaCompetencia: marcaFinal,
                 precio: parseFloat(document.getElementById("precioProducto").value),
                 tipoAcomodo: document.getElementById("tipoAcomodo").value,
+                frentesPropios,
+                frentesComp,
+                sharePropio,
+                tienePromocion: document.getElementById("tienePromocion").checked,
                 observaciones: document.getElementById("observaciones").value.trim(),
+                gps: coords,
                 fotos: [...fotosSeleccionadas],
                 totalFotos: fotosSeleccionadas.length,
                 fechaISO: new Date().toISOString(),
@@ -949,12 +1286,21 @@
                 if (navigator.onLine) {
                     await subirAFirestore(reporte);
                     await eliminarLocalOffline(reporte.idLocal);
-                    mostrarToast("Levantamiento guardado", "Sincronizado correctamente en la nube.", "ok");
+                    mostrarToast("Levantamiento guardado", "Sincronizado en la nube con ubicación GPS.", "ok");
                 } else {
                     mostrarToast("Guardado sin internet", "Se subirá automáticamente al recuperar señal.", "warn");
                 }
 
+                ultimaTiendaGuardada = tiendaFinal;
+                document.getElementById("ultimaTiendaTexto").textContent = tiendaFinal;
+                document.getElementById("mismaTiendaBanner").classList.remove("hidden");
+
                 document.getElementById("formReporte").reset();
+                document.getElementById("tiendaNombreManual").classList.add("hidden");
+                document.getElementById("marcaNombreManual").classList.add("hidden");
+                frentesPropios = 1;
+                frentesComp = 1;
+                ajustarFrentes("propios", 0);
                 fotosSeleccionadas = [];
                 renderizarMiniaturas();
                 await actualizarBannerPendientes();
@@ -978,7 +1324,12 @@
                 marcaCompetencia: reporte.marcaCompetencia,
                 precio: reporte.precio,
                 tipoAcomodo: reporte.tipoAcomodo,
+                frentesPropios: reporte.frentesPropios ?? 1,
+                frentesComp: reporte.frentesComp ?? 1,
+                sharePropio: reporte.sharePropio ?? 50,
+                tienePromocion: Boolean(reporte.tienePromocion),
                 observaciones: reporte.observaciones,
+                gps: reporte.gps || null,
                 fotos: reporte.fotos,
                 totalFotos: reporte.totalFotos,
                 fechaISO: reporte.fechaISO,
@@ -1068,7 +1419,7 @@
                 <div class="bg-zinc-950 border ${item._estado === "cola" ? "border-yellow-400/50" : "border-zinc-800"} rounded-xl p-3.5 flex items-center justify-between gap-3">
                     <div class="min-w-0">
                         <p class="font-bold text-zinc-100 truncate">${item.tienda} • <span class="text-yellow-400">${item.marcaCompetencia}</span></p>
-                        <p class="text-[11px] text-zinc-400 mt-0.5">$${Number(item.precio).toFixed(2)} • ${item.tipoAcomodo}</p>
+                        <p class="text-[11px] text-zinc-400 mt-0.5">$${Number(item.precio).toFixed(2)} • ${item.tipoAcomodo} • Share ${item.sharePropio ?? 50}%</p>
                         <p class="text-[10px] text-zinc-500 mt-0.5">${item.fechaTexto || ""}</p>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
@@ -1086,8 +1437,30 @@
         };
 
         // =================================================================
-        // PANEL DE ADMINISTRADOR
+        // PANEL DE ADMINISTRADOR (SUBTABS, COMPARATIVA, CATÁLOGOS Y EXPORT)
         // =================================================================
+        window.cambiarSubTabAdmin = function (sub) {
+            const paneles = {
+                reportes: document.getElementById("adminPanelReportes"),
+                comparativa: document.getElementById("adminPanelComparativa"),
+                catalogos: document.getElementById("adminPanelCatalogos")
+            };
+            const botones = {
+                reportes: document.getElementById("adminSubTabReportes"),
+                comparativa: document.getElementById("adminSubTabComparativa"),
+                catalogos: document.getElementById("adminSubTabCatalogos")
+            };
+            Object.keys(paneles).forEach(k => {
+                if (k === sub) {
+                    paneles[k].classList.remove("hidden");
+                    botones[k].className = "flex-1 py-2.5 px-3 text-xs font-extrabold rounded-xl bg-yellow-400 text-zinc-950 transition";
+                } else {
+                    paneles[k].classList.add("hidden");
+                    botones[k].className = "flex-1 py-2.5 px-3 text-xs font-bold rounded-xl text-zinc-400 hover:text-white transition";
+                }
+            });
+        };
+
         window.cargarDatosAdmin = async function () {
             const contenedor = document.getElementById("adminListaReportes");
             contenedor.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8">Cargando auditorías desde Firebase...</p>`;
@@ -1124,34 +1497,96 @@
                 promotores.map(p => `<option value="${p}">${p}</option>`).join("");
         }
 
+        window.limpiarFiltrosAdmin = function () {
+            document.getElementById("filtroBusquedaAdmin").value = "";
+            document.getElementById("filtroMarcaAdmin").value = "";
+            document.getElementById("filtroPromotorAdmin").value = "";
+            document.getElementById("filtroFechaInicio").value = "";
+            document.getElementById("filtroFechaFin").value = "";
+            filtrarRegistrosAdmin();
+        };
+
         window.filtrarRegistrosAdmin = function () {
             const texto = document.getElementById("filtroBusquedaAdmin").value.toLowerCase().trim();
             const marca = document.getElementById("filtroMarcaAdmin").value;
             const promotor = document.getElementById("filtroPromotorAdmin").value;
+            const fInicio = document.getElementById("filtroFechaInicio").value;
+            const fFin = document.getElementById("filtroFechaFin").value;
 
-            const filtrados = todosReportesAdmin.filter(r => {
+            reportesFiltradosAdmin = todosReportesAdmin.filter(r => {
                 const nomProm = r.promotorNombre || r.promotorEmail || "";
+                const fechaDoc = (r.fechaISO || "").slice(0, 10);
+
                 const matchMarca = !marca || r.marcaCompetencia === marca;
                 const matchProm = !promotor || nomProm === promotor;
+                const matchInicio = !fInicio || (fechaDoc && fechaDoc >= fInicio);
+                const matchFin = !fFin || (fechaDoc && fechaDoc <= fFin);
                 const matchTexto = !texto ||
                     (r.tienda || "").toLowerCase().includes(texto) ||
                     nomProm.toLowerCase().includes(texto) ||
                     (r.observaciones || "").toLowerCase().includes(texto) ||
                     (r.tipoAcomodo || "").toLowerCase().includes(texto);
-                return matchMarca && matchProm && matchTexto;
+
+                return matchMarca && matchProm && matchInicio && matchFin && matchTexto;
             });
 
-            document.getElementById("kpiTotalReportes").textContent = filtrados.length;
-            document.getElementById("kpiTotalPromotores").textContent = new Set(filtrados.map(r => r.promotorEmail)).size;
-            const totalFotos = filtrados.reduce((acc, r) => acc + (r.totalFotos || (r.fotos ? r.fotos.length : 0)), 0);
-            document.getElementById("kpiTotalFotos").textContent = totalFotos;
-            const avgPrecio = filtrados.length
-                ? filtrados.reduce((acc, r) => acc + Number(r.precio || 0), 0) / filtrados.length
+            document.getElementById("kpiTotalReportes").textContent = reportesFiltradosAdmin.length;
+            document.getElementById("kpiTotalPromotores").textContent = new Set(reportesFiltradosAdmin.map(r => r.promotorEmail)).size;
+
+            const avgShare = reportesFiltradosAdmin.length
+                ? Math.round(reportesFiltradosAdmin.reduce((acc, r) => acc + Number(r.sharePropio ?? 50), 0) / reportesFiltradosAdmin.length)
+                : 0;
+            document.getElementById("kpiSharePromedio").textContent = `${avgShare}%`;
+
+            const avgPrecio = reportesFiltradosAdmin.length
+                ? reportesFiltradosAdmin.reduce((acc, r) => acc + Number(r.precio || 0), 0) / reportesFiltradosAdmin.length
                 : 0;
             document.getElementById("kpiPrecioPromedio").textContent = `$${avgPrecio.toFixed(2)}`;
 
-            renderizarListaAdmin(filtrados);
+            renderizarListaAdmin(reportesFiltradosAdmin);
+            renderizarTablaComparativa(reportesFiltradosAdmin);
         };
+
+        function renderizarTablaComparativa(lista) {
+            const tbody = document.getElementById("tablaComparativaBody");
+            if (!lista.length) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-zinc-500">Sin datos para analizar.</td></tr>`;
+                return;
+            }
+
+            const grupos = {};
+            lista.forEach(r => {
+                const m = r.marcaCompetencia || "Sin marca";
+                if (!grupos[m]) grupos[m] = [];
+                grupos[m].push(r);
+            });
+
+            tbody.innerHTML = Object.entries(grupos).map(([marca, items]) => {
+                const precios = items.map(i => Number(i.precio || 0));
+                const min = Math.min(...precios);
+                const max = Math.max(...precios);
+                const prom = precios.reduce((a, b) => a + b, 0) / precios.length;
+                const share = Math.round(items.reduce((a, b) => a + Number(b.sharePropio ?? 50), 0) / items.length);
+
+                return `
+                    <tr class="hover:bg-zinc-950/60">
+                        <td class="py-3 px-3 font-extrabold text-yellow-400">${marca}</td>
+                        <td class="py-3 px-3 text-zinc-200 font-bold">${items.length}</td>
+                        <td class="py-3 px-3 text-zinc-300">$${min.toFixed(2)}</td>
+                        <td class="py-3 px-3 text-white font-extrabold">$${prom.toFixed(2)}</td>
+                        <td class="py-3 px-3 text-zinc-300">$${max.toFixed(2)}</td>
+                        <td class="py-3 px-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-20 h-2 bg-zinc-800 rounded-full overflow-hidden">
+                                    <div class="h-full bg-yellow-400" style="width: ${share}%"></div>
+                                </div>
+                                <span class="font-bold text-zinc-200">${share}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join("");
+        }
 
         function renderizarListaAdmin(lista) {
             const contenedor = document.getElementById("adminListaReportes");
@@ -1162,26 +1597,33 @@
 
             contenedor.innerHTML = lista.map(r => {
                 const fotos = r.fotos || [];
-                const thumbs = fotos.slice(0, 4).map(src =>
-                    `<img src="${src}" class="w-14 h-14 rounded-lg object-cover border border-zinc-700">`
-                ).join("");
+                const thumbs = fotos.slice(0, 4).map(item => {
+                    const src = typeof item === "string" ? item : item.src;
+                    return `<img src="${src}" class="w-14 h-14 rounded-lg object-cover border border-zinc-700">`;
+                }).join("");
+
+                const gpsLink = r.gps && r.gps.lat
+                    ? `<a href="https://maps.google.com/?q=${r.gps.lat},${r.gps.lng}" target="_blank" class="text-yellow-400 hover:underline ml-2"><i class="fa-solid fa-location-dot mr-0.5"></i>Mapa</a>`
+                    : "";
 
                 return `
                     <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 space-y-3 print-card">
                         <div class="flex flex-wrap items-start justify-between gap-2 border-b border-zinc-800 pb-2.5">
                             <div>
-                                <div class="flex items-center gap-2">
+                                <div class="flex flex-wrap items-center gap-2">
                                     <span class="text-sm font-extrabold text-white">${r.tienda}</span>
                                     <span class="text-[11px] font-extrabold px-2 py-0.5 rounded bg-yellow-400 text-zinc-950">${r.marcaCompetencia}</span>
+                                    ${r.tienePromocion ? `<span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-zinc-800 text-yellow-400 border border-yellow-400/50">CON PROMOCIÓN</span>` : ""}
                                 </div>
                                 <p class="text-[11px] text-zinc-400 mt-1">
                                     <i class="fa-solid fa-user text-yellow-400 mr-1"></i>${r.promotorNombre || r.promotorEmail} •
                                     <i class="fa-regular fa-clock text-zinc-500 ml-1 mr-1"></i>${r.fechaTexto || ""}
+                                    ${gpsLink}
                                 </p>
                             </div>
                             <div class="text-right">
                                 <p class="text-lg font-black text-yellow-400">$${Number(r.precio || 0).toFixed(2)}</p>
-                                <p class="text-[11px] text-zinc-400">${r.tipoAcomodo}</p>
+                                <p class="text-[11px] text-zinc-400">${r.tipoAcomodo} • Share ${r.sharePropio ?? 50}% (${r.frentesPropios ?? 1} vs ${r.frentesComp ?? 1})</p>
                             </div>
                         </div>
 
@@ -1206,6 +1648,67 @@
                     </div>
                 `;
             }).join("");
+        }
+
+        // Gestión de Catálogos en Admin
+        function renderizarListasCatalogosAdmin() {
+            const contMarcas = document.getElementById("listaCatalogoMarcas");
+            const contTiendas = document.getElementById("listaCatalogoTiendas");
+
+            contMarcas.innerHTML = catalogoMarcas.map((m, idx) => `
+                <div class="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs">
+                    <span class="text-zinc-200 font-semibold">${m}</span>
+                    <button type="button" onclick="eliminarItemCatalogo('marcas', ${idx})" class="text-zinc-500 hover:text-yellow-400">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            `).join("");
+
+            contTiendas.innerHTML = catalogoTiendas.map((t, idx) => `
+                <div class="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs">
+                    <span class="text-zinc-200 font-semibold">${t}</span>
+                    <button type="button" onclick="eliminarItemCatalogo('tiendas', ${idx})" class="text-zinc-500 hover:text-yellow-400">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            `).join("");
+        }
+
+        window.agregarItemCatalogo = async function (tipo) {
+            const input = document.getElementById(tipo === "marcas" ? "nuevaMarcaInput" : "nuevaTiendaInput");
+            const valor = input.value.trim();
+            if (!valor) return;
+
+            if (tipo === "marcas") {
+                if (!catalogoMarcas.includes(valor)) catalogoMarcas.push(valor);
+            } else {
+                if (!catalogoTiendas.includes(valor)) catalogoTiendas.push(valor);
+            }
+            input.value = "";
+            await guardarCatalogosNube();
+        };
+
+        window.eliminarItemCatalogo = async function (tipo, idx) {
+            if (tipo === "marcas") catalogoMarcas.splice(idx, 1);
+            else catalogoTiendas.splice(idx, 1);
+            await guardarCatalogosNube();
+        };
+
+        async function guardarCatalogosNube() {
+            localStorage.setItem("cat_tiendas_cache", JSON.stringify(catalogoTiendas));
+            localStorage.setItem("cat_marcas_cache", JSON.stringify(catalogoMarcas));
+            renderizarSelectsCatalogos();
+            renderizarListasCatalogosAdmin();
+            try {
+                await setDoc(doc(db, "configuracion_app", "catalogos"), {
+                    tiendas: catalogoTiendas,
+                    marcas: catalogoMarcas,
+                    actualizadoISO: new Date().toISOString()
+                });
+                mostrarToast("Catálogo actualizado", "Cambios sincronizados para todos los promotores.", "ok");
+            } catch (e) {
+                mostrarToast("Guardado localmente", "Revisa permisos de escritura en configuracion_app.", "warn");
+            }
         }
 
         window.verGaleriaAdmin = function (id) {
@@ -1234,13 +1737,14 @@
             }
         };
 
+        // Exportación 1: Excel / CSV
         window.exportarCSVAdmin = function () {
-            if (!todosReportesAdmin.length) {
+            if (!reportesFiltradosAdmin.length) {
                 mostrarToast("Sin datos", "No hay registros para exportar.", "warn");
                 return;
             }
-            const headers = ["Fecha", "Promotor", "Correo", "Tienda", "Marca Competencia", "Precio MXN", "Acomodo", "Observaciones", "Total Fotos"];
-            const rows = todosReportesAdmin.map(r => [
+            const headers = ["Fecha", "Promotor", "Correo", "Tienda", "Marca Competencia", "Precio MXN", "Acomodo", "Frentes Nuestros", "Frentes Comp", "Share Nuestro %", "Promocion", "GPS Lat", "GPS Lng", "Observaciones", "Total Fotos"];
+            const rows = reportesFiltradosAdmin.map(r => [
                 `"${(r.fechaTexto || "").replace(/"/g, '""')}"`,
                 `"${(r.promotorNombre || "").replace(/"/g, '""')}"`,
                 `"${(r.promotorEmail || "").replace(/"/g, '""')}"`,
@@ -1248,18 +1752,70 @@
                 `"${(r.marcaCompetencia || "").replace(/"/g, '""')}"`,
                 Number(r.precio || 0).toFixed(2),
                 `"${(r.tipoAcomodo || "").replace(/"/g, '""')}"`,
+                r.frentesPropios ?? 1,
+                r.frentesComp ?? 1,
+                r.sharePropio ?? 50,
+                r.tienePromocion ? "SI" : "NO",
+                r.gps?.lat || "",
+                r.gps?.lng || "",
                 `"${(r.observaciones || "").replace(/"/g, '""')}"`,
                 r.totalFotos || (r.fotos ? r.fotos.length : 0)
             ]);
 
             const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
             const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-            const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.href = url;
-            link.download = `reporte_competencia_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.href = URL.createObjectURL(blob);
+            link.download = `auditoria_competencia_${new Date().toISOString().slice(0, 10)}.csv`;
             link.click();
             mostrarToast("Excel descargado", "Archivo CSV generado con éxito.", "ok");
+        };
+
+        // Exportación 2: Reporte HTML Ejecutable / Imprimible con Fotos Incrustadas
+        window.exportarReporteHTMLConFotos = function () {
+            if (!reportesFiltradosAdmin.length) {
+                mostrarToast("Sin datos", "No hay registros para generar el reporte.", "warn");
+                return;
+            }
+            const bloques = reportesFiltradosAdmin.map((r, i) => {
+                const imgs = (r.fotos || []).map((f, idx) => {
+                    const src = typeof f === "string" ? f : f.src;
+                    const et = typeof f === "string" ? `Foto ${idx + 1}` : (f.etiqueta || `Foto ${idx + 1}`);
+                    return `<div style="display:inline-block;margin:4px;text-align:center;border:1px solid #ddd;padding:4px;border-radius:6px;">
+                        <img src="${src}" style="width:170px;height:170px;object-fit:cover;display:block;">
+                        <span style="font-size:10px;font-weight:bold;color:#333;">${et}</span>
+                    </div>`;
+                }).join("");
+
+                return `<div style="border:1px solid #d4d4d8;border-radius:10px;padding:14px;margin-bottom:16px;page-break-inside:avoid;">
+                    <div style="display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding-bottom:8px;margin-bottom:8px;">
+                        <div>
+                            <strong style="font-size:15px;">#${i + 1} ${r.tienda} — <span style="background:#facc15;padding:2px 6px;border-radius:4px;">${r.marcaCompetencia}</span></strong><br>
+                            <span style="font-size:12px;color:#555;">Promotor: ${r.promotorNombre || r.promotorEmail} | Fecha: ${r.fechaTexto}</span>
+                        </div>
+                        <div style="text-align:right;">
+                            <strong style="font-size:16px;">$${Number(r.precio || 0).toFixed(2)} MXN</strong><br>
+                            <span style="font-size:11px;color:#555;">${r.tipoAcomodo} | Share: ${r.sharePropio ?? 50}%</span>
+                        </div>
+                    </div>
+                    ${r.observaciones ? `<p style="font-size:12px;margin:6px 0;"><strong>Observaciones:</strong> ${r.observaciones}</p>` : ""}
+                    <div>${imgs}</div>
+                </div>`;
+            }).join("");
+
+            const htmlDoc = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Reporte Fotográfico PDV</title></head>
+                <body style="font-family:Arial,sans-serif;padding:24px;color:#111;">
+                    <div style="background:#09090b;color:#fff;padding:16px 20px;border-radius:10px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;">
+                        <div><h1 style="margin:0;font-size:18px;color:#facc15;">REPORTE DE AUDITORÍA EN PUNTO DE VENTA</h1>
+                        <p style="margin:4px 0 0;font-size:12px;color:#a1a1aa;">Generado el ${new Date().toLocaleString("es-MX")} • ${reportesFiltradosAdmin.length} registros</p></div>
+                        <button onclick="window.print()" style="background:#facc15;color:#09090b;border:none;padding:8px 14px;font-weight:bold;border-radius:6px;cursor:pointer;">Imprimir / Guardar PDF</button>
+                    </div>
+                    ${bloques}
+                </body></html>`;
+
+            const win = window.open("", "_blank");
+            win.document.write(htmlDoc);
+            win.document.close();
         };
 
         // =================================================================
