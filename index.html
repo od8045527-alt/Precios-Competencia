@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#111827">
+    <meta name="theme-color" content="#09090b">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Auditoría PDV">
@@ -12,10 +12,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #09090b; color: #f4f4f5; }
         .loader {
-            border: 3px solid rgba(255,255,255,0.2);
+            border: 3px solid rgba(250, 204, 21, 0.2);
             border-top: 3px solid #facc15;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+        }
+        .loader-dark {
+            border: 3px solid rgba(9, 9, 11, 0.25);
+            border-top: 3px solid #09090b;
             border-radius: 50%;
             width: 20px;
             height: 20px;
@@ -34,32 +42,35 @@
         }
     </style>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col">
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col selection:bg-yellow-400 selection:text-zinc-950">
 
     <!-- BARRA SUPERIOR -->
-    <header class="bg-gray-900/95 backdrop-blur border-b border-gray-800 sticky top-0 z-40 px-4 py-3 flex items-center justify-between no-print">
+    <header class="bg-zinc-900/95 backdrop-blur border-b border-zinc-800 sticky top-0 z-40 px-4 py-3 flex items-center justify-between no-print">
         <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-xl bg-yellow-400 text-gray-950 flex items-center justify-center font-black shadow-md shadow-yellow-400/20">
+            <div class="w-9 h-9 rounded-xl bg-yellow-400 text-zinc-950 flex items-center justify-center font-black shadow-md shadow-yellow-400/20">
                 <i class="fa-solid fa-clipboard-check"></i>
             </div>
             <div>
                 <div class="flex items-center gap-2">
-                    <h1 class="text-sm font-bold leading-tight">Auditoría PDV</h1>
-                    <span id="roleBadge" class="hidden text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-yellow-400/20 text-yellow-400 border border-yellow-400/30">Promotor</span>
+                    <h1 class="text-sm font-bold tracking-tight text-white leading-tight">Auditoría PDV</h1>
+                    <span id="roleBadge" class="hidden text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-yellow-400 text-zinc-950">Promotor</span>
                 </div>
-                <p id="userEmailHeader" class="text-[11px] text-gray-400">Sin sesión iniciada</p>
+                <p id="userEmailHeader" class="text-[11px] text-zinc-400">Sin sesión iniciada</p>
             </div>
         </div>
 
         <div class="flex items-center gap-2">
-            <span id="networkBadge" class="text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> En línea
+            <!-- Estado de Red -->
+            <span id="networkBadge" class="text-xs px-2.5 py-1 rounded-full font-semibold flex items-center gap-1.5 bg-zinc-800 text-yellow-400 border border-yellow-400/30">
+                <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span> En línea
             </span>
-            <button id="btnInstallApp" onclick="gestionarInstalacionApp()" class="bg-yellow-400 hover:bg-yellow-300 text-gray-950 text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow">
+            <!-- Botón Descargar / Instalar App -->
+            <button id="btnInstallApp" onclick="gestionarInstalacionApp()" class="bg-yellow-400 hover:bg-yellow-300 text-zinc-950 text-xs font-extrabold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow">
                 <i class="fa-solid fa-download"></i>
                 <span class="hidden sm:inline">Descargar App</span>
             </button>
-            <button id="btnLogout" onclick="solicitarCerrarSesion()" class="hidden text-gray-400 hover:text-red-400 p-2 rounded-lg hover:bg-gray-800 transition" title="Cerrar sesión">
+            <!-- Cerrar Sesión -->
+            <button id="btnLogout" onclick="solicitarCerrarSesion()" class="hidden text-zinc-400 hover:text-yellow-400 p-2 rounded-lg hover:bg-zinc-800 transition" title="Cerrar sesión">
                 <i class="fa-solid fa-right-from-bracket"></i>
             </button>
         </div>
@@ -71,27 +82,27 @@
         <!-- =============================================================== -->
         <!-- VISTA 1: LOGIN / REGISTRO / ACCESO ADMIN                        -->
         <!-- =============================================================== -->
-        <section id="viewLogin" class="max-w-md mx-auto mt-6 bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-2xl">
+        <section id="viewLogin" class="max-w-md mx-auto mt-6 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-2xl">
             <div class="text-center mb-5">
-                <div class="w-14 h-14 bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+                <div class="w-14 h-14 bg-zinc-950 border border-yellow-400/40 text-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-inner">
                     <i class="fa-solid fa-user-shield"></i>
                 </div>
-                <h2 class="text-xl font-bold">Control de Acceso</h2>
-                <p class="text-xs text-gray-400 mt-1">Inicia sesión una vez con red para habilitar el uso sin internet</p>
+                <h2 class="text-xl font-extrabold text-white">Control de Acceso</h2>
+                <p class="text-xs text-zinc-400 mt-1">Inicia sesión una vez con red para habilitar el uso sin internet</p>
             </div>
 
             <!-- SELECTOR DE PESTAÑAS -->
-            <div class="grid grid-cols-3 gap-1.5 bg-gray-950 p-1 rounded-xl border border-gray-800 mb-5">
+            <div class="grid grid-cols-3 gap-1.5 bg-zinc-950 p-1 rounded-xl border border-zinc-800 mb-5">
                 <button type="button" id="tabLogin" onclick="cambiarTabAuth('login')"
-                    class="py-2 text-xs font-bold rounded-lg bg-yellow-400 text-gray-950 transition">
+                    class="py-2 text-xs font-extrabold rounded-lg bg-yellow-400 text-zinc-950 transition">
                     Ingresar
                 </button>
                 <button type="button" id="tabRegister" onclick="cambiarTabAuth('register')"
-                    class="py-2 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition">
+                    class="py-2 text-xs font-bold rounded-lg text-zinc-400 hover:text-white transition">
                     Registro
                 </button>
                 <button type="button" id="tabAdmin" onclick="cambiarTabAuth('admin')"
-                    class="py-2 text-xs font-bold rounded-lg text-gray-400 hover:text-yellow-400 transition">
+                    class="py-2 text-xs font-bold rounded-lg text-zinc-400 hover:text-yellow-400 transition">
                     <i class="fa-solid fa-crown mr-1"></i>Admin
                 </button>
             </div>
@@ -99,17 +110,17 @@
             <!-- FORMULARIO INICIAR SESIÓN PROMOTOR -->
             <form id="formLogin" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Correo electrónico</label>
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Correo electrónico</label>
                     <input type="email" id="loginEmail" required placeholder="promotor@empresa.com"
-                        class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
+                        class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-400 transition">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Contraseña</label>
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Contraseña</label>
                     <input type="password" id="loginPass" required placeholder="••••••••"
-                        class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
+                        class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-400 transition">
                 </div>
                 <button type="submit" id="btnLoginSubmit"
-                    class="w-full bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-bold py-3.5 rounded-xl transition flex items-center justify-center gap-2">
+                    class="w-full bg-yellow-400 hover:bg-yellow-300 text-zinc-950 font-extrabold py-3.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-yellow-400/10">
                     <span>Ingresar como Promotor</span>
                 </button>
             </form>
@@ -117,27 +128,27 @@
             <!-- FORMULARIO REGISTRO PROMOTOR -->
             <form id="formRegister" class="hidden space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Nombre completo *</label>
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Nombre completo *</label>
                     <input type="text" id="regNombre" required placeholder="Ej. Angel Delgado"
-                        class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
+                        class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-400 transition">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Correo electrónico *</label>
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Correo electrónico *</label>
                     <input type="email" id="regEmail" required placeholder="promotor@empresa.com"
-                        class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
+                        class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-400 transition">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Contraseña (mín. 6 caracteres) *</label>
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Contraseña (mín. 6 caracteres) *</label>
                     <input type="password" id="regPass" required minlength="6" placeholder="••••••••"
-                        class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
+                        class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-400 transition">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Confirmar contraseña *</label>
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Confirmar contraseña *</label>
                     <input type="password" id="regPassConfirm" required minlength="6" placeholder="••••••••"
-                        class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
+                        class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-400 transition">
                 </div>
                 <button type="submit" id="btnRegisterSubmit"
-                    class="w-full bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-bold py-3.5 rounded-xl transition flex items-center justify-center gap-2">
+                    class="w-full bg-yellow-400 hover:bg-yellow-300 text-zinc-950 font-extrabold py-3.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-yellow-400/10">
                     <i class="fa-solid fa-user-plus"></i>
                     <span>Registrarme y Entrar</span>
                 </button>
@@ -145,17 +156,17 @@
 
             <!-- FORMULARIO ACCESO ADMINISTRADOR -->
             <form id="formAdmin" class="hidden space-y-4">
-                <div class="bg-yellow-400/10 border border-yellow-400/30 rounded-xl p-3 text-xs text-yellow-300 flex items-center gap-2.5">
+                <div class="bg-zinc-950 border border-yellow-400/30 rounded-xl p-3 text-xs text-yellow-400 flex items-center gap-2.5">
                     <i class="fa-solid fa-shield-halved text-base"></i>
                     <span>Acceso exclusivo para supervisión, descarga de reportes y revisión fotográfica.</span>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Código de Administrador *</label>
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Código de Administrador *</label>
                     <input type="password" id="adminCodeInput" required placeholder="Ingresa la clave maestra..."
-                        class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-400">
+                        class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-400 transition">
                 </div>
                 <button type="submit"
-                    class="w-full bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-bold py-3.5 rounded-xl transition flex items-center justify-center gap-2">
+                    class="w-full bg-yellow-400 hover:bg-yellow-300 text-zinc-950 font-extrabold py-3.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-yellow-400/10">
                     <i class="fa-solid fa-unlock-keyhole"></i>
                     <span>Entrar al Panel Admin</span>
                 </button>
@@ -168,41 +179,41 @@
         <section id="viewApp" class="hidden max-w-2xl mx-auto space-y-5">
 
             <!-- BANNER DE COLA OFFLINE -->
-            <div id="syncBanner" class="hidden bg-amber-500/10 border border-amber-500/40 rounded-2xl p-4 flex items-center justify-between gap-3">
+            <div id="syncBanner" class="hidden bg-zinc-900 border border-yellow-400/50 rounded-2xl p-4 flex items-center justify-between gap-3 shadow-lg">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg shrink-0">
+                    <div class="w-10 h-10 rounded-xl bg-yellow-400/15 text-yellow-400 flex items-center justify-center text-lg shrink-0">
                         <i class="fa-solid fa-cloud-arrow-up"></i>
                     </div>
                     <div>
-                        <p class="text-sm font-bold text-amber-300"><span id="pendingCount">0</span> reporte(s) pendientes de subir</p>
-                        <p class="text-xs text-gray-400">Guardados en tu dispositivo. Se enviarán al detectar señal.</p>
+                        <p class="text-sm font-bold text-yellow-400"><span id="pendingCount">0</span> reporte(s) pendientes de subir</p>
+                        <p class="text-xs text-zinc-400">Guardados en tu dispositivo. Se enviarán al detectar señal.</p>
                     </div>
                 </div>
                 <button onclick="sincronizarPendientes()" id="btnSyncManual"
-                    class="bg-amber-400 hover:bg-amber-300 text-gray-950 text-xs font-bold px-3.5 py-2 rounded-xl shrink-0">
+                    class="bg-yellow-400 hover:bg-yellow-300 text-zinc-950 text-xs font-extrabold px-3.5 py-2 rounded-xl shrink-0 transition">
                     Subir ahora
                 </button>
             </div>
 
             <!-- FORMULARIO DE LEVANTAMIENTO -->
-            <form id="formReporte" class="bg-gray-900 border border-gray-800 rounded-2xl p-5 space-y-4 shadow-lg">
-                <div class="flex items-center justify-between border-b border-gray-800 pb-3">
-                    <h2 class="font-bold text-base flex items-center gap-2">
+            <form id="formReporte" class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4 shadow-xl">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+                    <h2 class="font-extrabold text-base text-white flex items-center gap-2">
                         <i class="fa-solid fa-store text-yellow-400"></i> Nuevo Levantamiento
                     </h2>
-                    <span id="fechaActualBadge" class="text-xs text-gray-400"></span>
+                    <span id="fechaActualBadge" class="text-xs font-medium text-zinc-400 bg-zinc-950 px-2.5 py-1 rounded-lg border border-zinc-800"></span>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Tienda / Punto de Venta *</label>
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Tienda / Punto de Venta *</label>
                     <input type="text" id="tiendaNombre" required placeholder="Ej. Walmart Satélite / Chedraui Polanco"
-                        class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-yellow-400">
+                        class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-400 transition">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Marca de la Competencia *</label>
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Marca de la Competencia *</label>
                     <select id="marcaCompetencia" required
-                        class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-yellow-400">
+                        class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-yellow-400 transition">
                         <option value="">Selecciona una marca...</option>
                         <option value="Marca Competidora A">Marca Competidora A</option>
                         <option value="Marca Competidora B">Marca Competidora B</option>
@@ -214,15 +225,15 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Precio Detectado ($ MXN) *</label>
+                        <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Precio Detectado ($ MXN) *</label>
                         <input type="number" step="0.01" min="0" id="precioProducto" required placeholder="0.00"
-                            class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-yellow-400">
+                            class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-400 transition">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">¿Cómo está acomodado? *</label>
+                        <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">¿Cómo está acomodado? *</label>
                         <select id="tipoAcomodo" required
-                            class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-yellow-400">
+                            class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-yellow-400 transition">
                             <option value="">Selecciona exhibición...</option>
                             <option value="Anaquel Regular (Nivel Ojos)">Anaquel Regular (Nivel Ojos)</option>
                             <option value="Anaquel Inferior / Superior">Anaquel Inferior / Superior</option>
@@ -235,26 +246,26 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Observaciones / Promociones</label>
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Observaciones / Promociones</label>
                     <textarea id="observaciones" rows="2" placeholder="Ej. Tiene etiqueta amarilla de oferta 2x1, frentes ganados..."
-                        class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-yellow-400"></textarea>
+                        class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-400 transition"></textarea>
                 </div>
 
                 <!-- FOTOS (4 O MÁS) -->
                 <div class="pt-2">
                     <div class="flex items-center justify-between mb-2">
-                        <label class="text-xs font-semibold text-gray-400 uppercase">
-                            Evidencia Fotográfica (<span id="photoCounter" class="text-yellow-400 font-bold">0</span> fotos)
+                        <label class="text-xs font-semibold text-zinc-400 uppercase">
+                            Evidencia Fotográfica (<span id="photoCounter" class="text-yellow-400 font-extrabold">0</span> fotos)
                         </label>
-                        <span class="text-[11px] text-gray-500">Mín. 4 recomendadas • Sin límite</span>
+                        <span class="text-[11px] text-zinc-500">Mín. 4 recomendadas • Sin límite</span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2.5 mb-3">
-                        <label class="cursor-pointer bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 px-3 text-xs font-semibold flex items-center justify-center gap-2 transition">
+                        <label class="cursor-pointer bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-yellow-400/50 rounded-xl py-2.5 px-3 text-xs font-bold text-zinc-100 flex items-center justify-center gap-2 transition">
                             <i class="fa-solid fa-camera text-yellow-400"></i> Tomar Foto
                             <input type="file" accept="image/*" capture="environment" class="hidden" onchange="procesarArchivosFotos(event)">
                         </label>
-                        <label class="cursor-pointer bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 px-3 text-xs font-semibold flex items-center justify-center gap-2 transition">
+                        <label class="cursor-pointer bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-yellow-400/50 rounded-xl py-2.5 px-3 text-xs font-bold text-zinc-100 flex items-center justify-center gap-2 transition">
                             <i class="fa-solid fa-images text-yellow-400"></i> Subir Varias (4+)
                             <input type="file" accept="image/*" multiple class="hidden" onchange="procesarArchivosFotos(event)">
                         </label>
@@ -264,23 +275,23 @@
                 </div>
 
                 <button type="submit" id="btnGuardarReporte"
-                    class="w-full bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-bold py-3.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-yellow-400/10">
+                    class="w-full bg-yellow-400 hover:bg-yellow-300 text-zinc-950 font-extrabold py-3.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-yellow-400/15">
                     <i class="fa-solid fa-floppy-disk"></i>
                     <span>Guardar Levantamiento</span>
                 </button>
             </form>
 
             <!-- HISTORIAL DEL PROMOTOR -->
-            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-lg">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-bold text-gray-200 flex items-center gap-2">
+                    <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
                         <i class="fa-solid fa-clock-rotate-left text-yellow-400"></i> Mis Registros Recientes
                     </h3>
-                    <button onclick="cargarHistorial()" class="text-xs text-yellow-400 hover:underline flex items-center gap-1">
+                    <button onclick="cargarHistorial()" class="text-xs font-bold text-yellow-400 hover:text-yellow-300 flex items-center gap-1 transition">
                         <i class="fa-solid fa-rotate"></i> Actualizar
                     </button>
                 </div>
-                <div id="listaHistorial" class="space-y-2.5 text-xs text-gray-400">
+                <div id="listaHistorial" class="space-y-2.5 text-xs text-zinc-400">
                     <p>Cargando registros...</p>
                 </div>
             </div>
@@ -293,38 +304,38 @@
 
             <!-- KPI RESUMEN -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 no-print">
-                <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-                    <p class="text-[11px] text-gray-400 uppercase font-semibold">Total Reportes</p>
+                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+                    <p class="text-[11px] text-zinc-400 uppercase font-semibold">Total Reportes</p>
                     <p id="kpiTotalReportes" class="text-2xl font-black text-yellow-400 mt-1">0</p>
                 </div>
-                <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-                    <p class="text-[11px] text-gray-400 uppercase font-semibold">Promotores Activos</p>
+                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+                    <p class="text-[11px] text-zinc-400 uppercase font-semibold">Promotores Activos</p>
                     <p id="kpiTotalPromotores" class="text-2xl font-black text-white mt-1">0</p>
                 </div>
-                <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-                    <p class="text-[11px] text-gray-400 uppercase font-semibold">Total Fotos</p>
-                    <p id="kpiTotalFotos" class="text-2xl font-black text-emerald-400 mt-1">0</p>
+                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+                    <p class="text-[11px] text-zinc-400 uppercase font-semibold">Total Fotos</p>
+                    <p id="kpiTotalFotos" class="text-2xl font-black text-yellow-400 mt-1">0</p>
                 </div>
-                <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-                    <p class="text-[11px] text-gray-400 uppercase font-semibold">Precio Promedio</p>
-                    <p id="kpiPrecioPromedio" class="text-2xl font-black text-sky-400 mt-1">$0.00</p>
+                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+                    <p class="text-[11px] text-zinc-400 uppercase font-semibold">Precio Promedio</p>
+                    <p id="kpiPrecioPromedio" class="text-2xl font-black text-zinc-100 mt-1">$0.00</p>
                 </div>
             </div>
 
             <!-- BARRA DE FILTROS Y EXPORTACIÓN -->
-            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3 no-print">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 space-y-3 no-print">
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                    <h2 class="text-base font-bold flex items-center gap-2">
+                    <h2 class="text-base font-extrabold text-white flex items-center gap-2">
                         <i class="fa-solid fa-crown text-yellow-400"></i> Panel de Supervisión
                     </h2>
                     <div class="flex flex-wrap gap-2">
-                        <button onclick="cargarDatosAdmin()" class="bg-gray-800 hover:bg-gray-700 text-xs font-semibold px-3 py-2 rounded-xl transition">
+                        <button onclick="cargarDatosAdmin()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-xs font-bold px-3 py-2 rounded-xl border border-zinc-700 transition">
                             <i class="fa-solid fa-rotate mr-1 text-yellow-400"></i> Refrescar
                         </button>
-                        <button onclick="exportarCSVAdmin()" class="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold px-3 py-2 rounded-xl transition">
+                        <button onclick="exportarCSVAdmin()" class="bg-zinc-800 hover:bg-zinc-700 text-yellow-400 border border-yellow-400/40 text-xs font-bold px-3 py-2 rounded-xl transition">
                             <i class="fa-solid fa-file-excel mr-1"></i> Excel / CSV
                         </button>
-                        <button onclick="window.print()" class="bg-yellow-400 hover:bg-yellow-300 text-gray-950 text-xs font-bold px-3 py-2 rounded-xl transition">
+                        <button onclick="window.print()" class="bg-yellow-400 hover:bg-yellow-300 text-zinc-950 text-xs font-extrabold px-3 py-2 rounded-xl transition">
                             <i class="fa-solid fa-print mr-1"></i> Imprimir / PDF
                         </button>
                     </div>
@@ -332,13 +343,13 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <input type="text" id="filtroBusquedaAdmin" oninput="filtrarRegistrosAdmin()" placeholder="Buscar tienda, promotor o nota..."
-                        class="bg-gray-950 border border-gray-700 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-yellow-400">
+                        class="bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-yellow-400">
                     <select id="filtroMarcaAdmin" onchange="filtrarRegistrosAdmin()"
-                        class="bg-gray-950 border border-gray-700 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-yellow-400">
+                        class="bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
                         <option value="">Todas las marcas</option>
                     </select>
                     <select id="filtroPromotorAdmin" onchange="filtrarRegistrosAdmin()"
-                        class="bg-gray-950 border border-gray-700 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-yellow-400">
+                        class="bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
                         <option value="">Todos los promotores</option>
                     </select>
                 </div>
@@ -346,7 +357,7 @@
 
             <!-- LISTADO DE REPORTES PARA ADMIN -->
             <div id="adminListaReportes" class="space-y-3">
-                <p class="text-xs text-gray-400 text-center py-8">Cargando auditorías...</p>
+                <p class="text-xs text-zinc-400 text-center py-8">Cargando auditorías...</p>
             </div>
         </section>
     </main>
@@ -356,20 +367,20 @@
     <!-- =================================================================== -->
 
     <!-- 1. MODAL DE CONFIRMACIÓN / ALERTA -->
-    <div id="customModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4 z-50 no-print">
-        <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl animate-pop">
+    <div id="customModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 no-print">
+        <div class="bg-zinc-900 border border-zinc-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl animate-pop">
             <div class="flex items-center gap-3 mb-3">
-                <div id="modalIconWrap" class="w-11 h-11 rounded-xl bg-yellow-400/15 text-yellow-400 flex items-center justify-center text-xl shrink-0">
+                <div id="modalIconWrap" class="w-11 h-11 rounded-xl bg-yellow-400/15 text-yellow-400 border border-yellow-400/30 flex items-center justify-center text-xl shrink-0">
                     <i id="modalIcon" class="fa-solid fa-circle-exclamation"></i>
                 </div>
-                <h3 id="modalTitle" class="text-base font-bold text-white">Confirmación</h3>
+                <h3 id="modalTitle" class="text-base font-extrabold text-white">Confirmación</h3>
             </div>
-            <p id="modalMessage" class="text-xs text-gray-300 leading-relaxed mb-5 whitespace-pre-line"></p>
+            <p id="modalMessage" class="text-xs text-zinc-300 leading-relaxed mb-5 whitespace-pre-line"></p>
             <div class="flex justify-end gap-2.5">
-                <button id="modalBtnCancel" class="px-4 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-xs font-semibold text-gray-300 transition">
+                <button id="modalBtnCancel" class="px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-zinc-300 border border-zinc-700 transition">
                     Cancelar
                 </button>
-                <button id="modalBtnConfirm" class="px-4 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-xs font-bold text-gray-950 transition">
+                <button id="modalBtnConfirm" class="px-4 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-xs font-extrabold text-zinc-950 transition">
                     Aceptar
                 </button>
             </div>
@@ -378,13 +389,13 @@
 
     <!-- 2. MODAL VISOR DE GALERÍA DE FOTOS -->
     <div id="galleryModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-50 no-print">
-        <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-pop">
-            <div class="px-5 py-3.5 border-b border-gray-800 flex items-center justify-between">
+        <div class="bg-zinc-900 border border-zinc-700 rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-pop">
+            <div class="px-5 py-3.5 border-b border-zinc-800 flex items-center justify-between">
                 <div>
-                    <h3 id="galleryTitle" class="text-sm font-bold text-white">Evidencia Fotográfica</h3>
-                    <p id="gallerySubtitle" class="text-[11px] text-gray-400"></p>
+                    <h3 id="galleryTitle" class="text-sm font-extrabold text-white">Evidencia Fotográfica</h3>
+                    <p id="gallerySubtitle" class="text-[11px] text-zinc-400"></p>
                 </div>
-                <button onclick="cerrarGaleria()" class="w-8 h-8 rounded-lg bg-gray-800 hover:bg-red-500/20 hover:text-red-400 text-gray-400 flex items-center justify-center transition">
+                <button onclick="cerrarGaleria()" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-yellow-400 hover:text-zinc-950 text-zinc-300 flex items-center justify-center transition">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
@@ -479,27 +490,27 @@
         };
 
         // =================================================================
-        // VENTANAS EMERGENTES PERSONALIZADAS (TOASTS Y MODALES)
+        // VENTANAS EMERGENTES PERSONALIZADAS (AMARILLO / GRIS / NEGRO)
         // =================================================================
         window.mostrarToast = function (titulo, mensaje = "", tipo = "info") {
             const container = document.getElementById("toastContainer");
             const estilos = {
-                ok: { border: "border-emerald-500/50", iconBg: "bg-emerald-500/20 text-emerald-400", icon: "fa-circle-check" },
-                warn: { border: "border-amber-500/50", iconBg: "bg-amber-500/20 text-amber-400", icon: "fa-triangle-exclamation" },
-                err: { border: "border-red-500/50", iconBg: "bg-red-500/20 text-red-400", icon: "fa-circle-xmark" },
-                info: { border: "border-yellow-400/50", iconBg: "bg-yellow-400/20 text-yellow-400", icon: "fa-circle-info" }
+                ok: { border: "border-yellow-400/70", iconBg: "bg-yellow-400 text-zinc-950", icon: "fa-circle-check" },
+                warn: { border: "border-yellow-400/50", iconBg: "bg-zinc-800 text-yellow-400 border border-yellow-400/40", icon: "fa-triangle-exclamation" },
+                err: { border: "border-zinc-600", iconBg: "bg-zinc-800 text-white border border-zinc-600", icon: "fa-circle-xmark" },
+                info: { border: "border-zinc-700", iconBg: "bg-zinc-800 text-yellow-400", icon: "fa-circle-info" }
             };
             const st = estilos[tipo] || estilos.info;
 
             const toast = document.createElement("div");
-            toast.className = `pointer-events-auto bg-gray-900/95 backdrop-blur border ${st.border} rounded-2xl p-3.5 shadow-2xl flex items-start gap-3 animate-pop`;
+            toast.className = `pointer-events-auto bg-zinc-900/95 backdrop-blur border ${st.border} rounded-2xl p-3.5 shadow-2xl flex items-start gap-3 animate-pop`;
             toast.innerHTML = `
                 <div class="w-8 h-8 rounded-xl ${st.iconBg} flex items-center justify-center shrink-0 mt-0.5">
                     <i class="fa-solid ${st.icon}"></i>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-xs font-bold text-white">${titulo}</p>
-                    ${mensaje ? `<p class="text-[11px] text-gray-400 mt-0.5 leading-snug">${mensaje}</p>` : ""}
+                    <p class="text-xs font-extrabold text-white">${titulo}</p>
+                    ${mensaje ? `<p class="text-[11px] text-zinc-400 mt-0.5 leading-snug">${mensaje}</p>` : ""}
                 </div>
             `;
             container.appendChild(toast);
@@ -525,13 +536,13 @@
                 btnCancel.textContent = textoCancelar;
 
                 if (tipo === "danger") {
-                    iconWrap.className = "w-11 h-11 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center text-xl shrink-0";
+                    iconWrap.className = "w-11 h-11 rounded-xl bg-zinc-950 text-yellow-400 border border-yellow-400/50 flex items-center justify-center text-xl shrink-0";
                     icon.className = "fa-solid fa-trash-can";
-                    btnConfirm.className = "px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-400 text-xs font-bold text-white transition";
+                    btnConfirm.className = "px-4 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-xs font-extrabold text-zinc-950 transition";
                 } else {
-                    iconWrap.className = "w-11 h-11 rounded-xl bg-yellow-400/15 text-yellow-400 flex items-center justify-center text-xl shrink-0";
-                    icon.className = "fa-solid fa-download";
-                    btnConfirm.className = "px-4 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-xs font-bold text-gray-950 transition";
+                    iconWrap.className = "w-11 h-11 rounded-xl bg-yellow-400/15 text-yellow-400 border border-yellow-400/30 flex items-center justify-center text-xl shrink-0";
+                    icon.className = "fa-solid fa-circle-exclamation";
+                    btnConfirm.className = "px-4 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-xs font-extrabold text-zinc-950 transition";
                 }
 
                 btnCancel.style.display = soloAlerta ? "none" : "inline-block";
@@ -558,16 +569,16 @@
             grid.innerHTML = "";
 
             if (!fotosArray || !fotosArray.length) {
-                grid.innerHTML = `<p class="text-xs text-gray-400 col-span-2 text-center py-6">Este registro no contiene fotografías.</p>`;
+                grid.innerHTML = `<p class="text-xs text-zinc-400 col-span-2 text-center py-6">Este registro no contiene fotografías.</p>`;
             } else {
                 fotosArray.forEach((src, i) => {
                     const card = document.createElement("div");
-                    card.className = "relative rounded-xl overflow-hidden border border-gray-700 bg-gray-950";
+                    card.className = "relative rounded-xl overflow-hidden border border-zinc-700 bg-zinc-950";
                     card.innerHTML = `
                         <img src="${src}" class="w-full h-64 object-contain bg-black">
-                        <div class="px-3 py-2 bg-gray-900 flex justify-between items-center text-[11px]">
-                            <span class="font-bold text-yellow-400">Fotografía #${i + 1}</span>
-                            <a href="${src}" download="evidencia_${i + 1}.jpg" class="text-gray-300 hover:text-white underline">
+                        <div class="px-3 py-2 bg-zinc-900 flex justify-between items-center text-[11px] border-t border-zinc-800">
+                            <span class="font-extrabold text-yellow-400">Fotografía #${i + 1}</span>
+                            <a href="${src}" download="evidencia_${i + 1}.jpg" class="text-zinc-200 hover:text-yellow-400 font-semibold transition">
                                 <i class="fa-solid fa-download mr-1"></i>Descargar
                             </a>
                         </div>
@@ -604,10 +615,10 @@
             Object.keys(forms).forEach(k => {
                 if (k === tab) {
                     forms[k].classList.remove("hidden");
-                    tabs[k].className = "py-2 text-xs font-bold rounded-lg bg-yellow-400 text-gray-950 transition";
+                    tabs[k].className = "py-2 text-xs font-extrabold rounded-lg bg-yellow-400 text-zinc-950 transition";
                 } else {
                     forms[k].classList.add("hidden");
-                    tabs[k].className = "py-2 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition";
+                    tabs[k].className = "py-2 text-xs font-bold rounded-lg text-zinc-400 hover:text-white transition";
                 }
             });
         };
@@ -718,12 +729,12 @@
             grid.innerHTML = "";
             fotosSeleccionadas.forEach((src, idx) => {
                 const div = document.createElement("div");
-                div.className = "relative group rounded-xl overflow-hidden border border-gray-700 aspect-square bg-gray-950";
+                div.className = "relative group rounded-xl overflow-hidden border border-zinc-700 aspect-square bg-zinc-950";
                 div.innerHTML = `
                     <img src="${src}" class="w-full h-full object-cover">
-                    <span class="absolute bottom-1 left-1 bg-black/75 text-[10px] px-1.5 py-0.5 rounded text-white font-bold">#${idx + 1}</span>
+                    <span class="absolute bottom-1 left-1 bg-black/80 text-[10px] px-1.5 py-0.5 rounded text-yellow-400 font-extrabold border border-zinc-700">#${idx + 1}</span>
                     <button type="button" onclick="eliminarFoto(${idx})"
-                        class="absolute top-1 right-1 bg-red-600 hover:bg-red-500 text-white w-6 h-6 rounded-full text-xs flex items-center justify-center shadow">
+                        class="absolute top-1 right-1 bg-zinc-950/90 hover:bg-yellow-400 text-white hover:text-zinc-950 border border-zinc-700 w-6 h-6 rounded-full text-xs flex items-center justify-center shadow transition">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 `;
@@ -741,7 +752,7 @@
 
             const badge = document.getElementById("roleBadge");
             badge.textContent = "Promotor";
-            badge.className = "text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30";
+            badge.className = "text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-800 text-yellow-400 border border-yellow-400/40";
             badge.classList.remove("hidden");
 
             document.getElementById("userEmailHeader").textContent = userObj.nombre
@@ -761,7 +772,7 @@
             localStorage.setItem("sesion_admin_activa", "true");
             const badge = document.getElementById("roleBadge");
             badge.textContent = "Administrador";
-            badge.className = "text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-yellow-400/20 text-yellow-400 border border-yellow-400/30";
+            badge.className = "text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-yellow-400 text-zinc-950";
             badge.classList.remove("hidden");
 
             document.getElementById("userEmailHeader").textContent = "Supervisión General • Yello";
@@ -806,7 +817,7 @@
             const btn = document.getElementById("btnLoginSubmit");
 
             btn.disabled = true;
-            btn.innerHTML = `<div class="loader"></div>`;
+            btn.innerHTML = `<div class="loader-dark"></div>`;
 
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
@@ -843,7 +854,7 @@
             }
 
             btn.disabled = true;
-            btn.innerHTML = `<div class="loader"></div> <span>Creando cuenta...</span>`;
+            btn.innerHTML = `<div class="loader-dark"></div> <span>Creando cuenta...</span>`;
 
             try {
                 const cred = await createUserWithEmailAndPassword(auth, email, pass);
@@ -914,7 +925,7 @@
 
             const btn = document.getElementById("btnGuardarReporte");
             btn.disabled = true;
-            btn.innerHTML = `<div class="loader"></div> <span>Guardando...</span>`;
+            btn.innerHTML = `<div class="loader-dark"></div> <span>Guardando...</span>`;
 
             const reporte = {
                 idLocal: "rep_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7),
@@ -1049,25 +1060,25 @@
             }
 
             if (!historialCachePromotor.length) {
-                contenedor.innerHTML = `<p class="text-gray-500">No hay registros capturados aún.</p>`;
+                contenedor.innerHTML = `<p class="text-zinc-500">No hay registros capturados aún.</p>`;
                 return;
             }
 
             contenedor.innerHTML = historialCachePromotor.map((item, idx) => `
-                <div class="bg-gray-950 border ${item._estado === "cola" ? "border-amber-500/40" : "border-gray-800"} rounded-xl p-3.5 flex items-center justify-between gap-3">
+                <div class="bg-zinc-950 border ${item._estado === "cola" ? "border-yellow-400/50" : "border-zinc-800"} rounded-xl p-3.5 flex items-center justify-between gap-3">
                     <div class="min-w-0">
-                        <p class="font-bold text-gray-100 truncate">${item.tienda} • <span class="text-yellow-400">${item.marcaCompetencia}</span></p>
-                        <p class="text-[11px] text-gray-400 mt-0.5">$${Number(item.precio).toFixed(2)} • ${item.tipoAcomodo}</p>
-                        <p class="text-[10px] text-gray-500 mt-0.5">${item.fechaTexto || ""}</p>
+                        <p class="font-bold text-zinc-100 truncate">${item.tienda} • <span class="text-yellow-400">${item.marcaCompetencia}</span></p>
+                        <p class="text-[11px] text-zinc-400 mt-0.5">$${Number(item.precio).toFixed(2)} • ${item.tipoAcomodo}</p>
+                        <p class="text-[10px] text-zinc-500 mt-0.5">${item.fechaTexto || ""}</p>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                         <button type="button" onclick="verFotosHistorialPromotor(${idx})"
-                            class="bg-gray-800 hover:bg-gray-700 text-gray-200 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition">
+                            class="bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-zinc-700 transition">
                             <i class="fa-solid fa-images text-yellow-400 mr-1"></i>${item.totalFotos || (item.fotos ? item.fotos.length : 0)}
                         </button>
                         ${item._estado === "cola"
-                            ? `<span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-1 rounded-lg font-bold">En cola</span>`
-                            : `<span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-lg font-bold">Subido</span>`
+                            ? `<span class="text-[10px] bg-zinc-800 text-yellow-400 border border-yellow-400/40 px-2 py-1 rounded-lg font-extrabold">En cola</span>`
+                            : `<span class="text-[10px] bg-yellow-400 text-zinc-950 px-2 py-1 rounded-lg font-extrabold">Subido</span>`
                         }
                     </div>
                 </div>
@@ -1079,7 +1090,7 @@
         // =================================================================
         window.cargarDatosAdmin = async function () {
             const contenedor = document.getElementById("adminListaReportes");
-            contenedor.innerHTML = `<p class="text-xs text-gray-400 text-center py-8">Cargando auditorías desde Firebase...</p>`;
+            contenedor.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8">Cargando auditorías desde Firebase...</p>`;
 
             try {
                 const snap = await getDocs(collection(db, "auditorias_competencia"));
@@ -1093,7 +1104,7 @@
                 filtrarRegistrosAdmin();
             } catch (err) {
                 contenedor.innerHTML = `
-                    <div class="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 text-xs text-red-300 text-center">
+                    <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-xs text-zinc-300 text-center">
                         No se pudieron cargar los datos. Verifica las reglas de Firestore o tu conexión a internet.
                     </div>`;
             }
@@ -1145,49 +1156,49 @@
         function renderizarListaAdmin(lista) {
             const contenedor = document.getElementById("adminListaReportes");
             if (!lista.length) {
-                contenedor.innerHTML = `<div class="bg-gray-900 border border-gray-800 rounded-2xl p-8 text-center text-xs text-gray-400">No se encontraron reportes con los filtros aplicados.</div>`;
+                contenedor.innerHTML = `<div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center text-xs text-zinc-400">No se encontraron reportes con los filtros aplicados.</div>`;
                 return;
             }
 
             contenedor.innerHTML = lista.map(r => {
                 const fotos = r.fotos || [];
                 const thumbs = fotos.slice(0, 4).map(src =>
-                    `<img src="${src}" class="w-14 h-14 rounded-lg object-cover border border-gray-700">`
+                    `<img src="${src}" class="w-14 h-14 rounded-lg object-cover border border-zinc-700">`
                 ).join("");
 
                 return `
-                    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3 print-card">
-                        <div class="flex flex-wrap items-start justify-between gap-2 border-b border-gray-800 pb-2.5">
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 space-y-3 print-card">
+                        <div class="flex flex-wrap items-start justify-between gap-2 border-b border-zinc-800 pb-2.5">
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-sm font-bold text-white">${r.tienda}</span>
-                                    <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-yellow-400/15 text-yellow-400">${r.marcaCompetencia}</span>
+                                    <span class="text-sm font-extrabold text-white">${r.tienda}</span>
+                                    <span class="text-[11px] font-extrabold px-2 py-0.5 rounded bg-yellow-400 text-zinc-950">${r.marcaCompetencia}</span>
                                 </div>
-                                <p class="text-[11px] text-gray-400 mt-1">
-                                    <i class="fa-solid fa-user text-gray-500 mr-1"></i>${r.promotorNombre || r.promotorEmail} •
-                                    <i class="fa-regular fa-clock text-gray-500 ml-1 mr-1"></i>${r.fechaTexto || ""}
+                                <p class="text-[11px] text-zinc-400 mt-1">
+                                    <i class="fa-solid fa-user text-yellow-400 mr-1"></i>${r.promotorNombre || r.promotorEmail} •
+                                    <i class="fa-regular fa-clock text-zinc-500 ml-1 mr-1"></i>${r.fechaTexto || ""}
                                 </p>
                             </div>
                             <div class="text-right">
-                                <p class="text-lg font-black text-emerald-400">$${Number(r.precio || 0).toFixed(2)}</p>
-                                <p class="text-[11px] text-gray-400">${r.tipoAcomodo}</p>
+                                <p class="text-lg font-black text-yellow-400">$${Number(r.precio || 0).toFixed(2)}</p>
+                                <p class="text-[11px] text-zinc-400">${r.tipoAcomodo}</p>
                             </div>
                         </div>
 
-                        ${r.observaciones ? `<p class="text-xs text-gray-300 bg-gray-950/70 rounded-xl px-3 py-2 border border-gray-800/80"><strong class="text-gray-400">Notas:</strong> ${r.observaciones}</p>` : ""}
+                        ${r.observaciones ? `<p class="text-xs text-zinc-300 bg-zinc-950 rounded-xl px-3 py-2 border border-zinc-800"><strong class="text-yellow-400">Notas:</strong> ${r.observaciones}</p>` : ""}
 
                         <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
                             <div class="flex items-center gap-2">
                                 ${thumbs}
-                                ${fotos.length > 4 ? `<span class="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-2.5 py-2 rounded-lg">+${fotos.length - 4}</span>` : ""}
+                                ${fotos.length > 4 ? `<span class="text-xs font-extrabold text-yellow-400 bg-zinc-950 border border-yellow-400/40 px-2.5 py-2 rounded-lg">+${fotos.length - 4}</span>` : ""}
                             </div>
                             <div class="flex items-center gap-2 no-print">
                                 <button onclick="verGaleriaAdmin('${r.id}')"
-                                    class="bg-gray-800 hover:bg-gray-700 text-xs font-semibold px-3 py-2 rounded-xl text-white transition">
+                                    class="bg-zinc-800 hover:bg-zinc-700 text-xs font-bold px-3 py-2 rounded-xl text-white border border-zinc-700 transition">
                                     <i class="fa-solid fa-expand text-yellow-400 mr-1"></i> Ver ${fotos.length} foto(s)
                                 </button>
                                 <button onclick="eliminarReporteAdmin('${r.id}')"
-                                    class="bg-red-500/15 hover:bg-red-500/25 text-red-400 text-xs font-semibold px-3 py-2 rounded-xl transition" title="Eliminar registro">
+                                    class="bg-zinc-950 hover:bg-zinc-800 text-zinc-400 hover:text-yellow-400 text-xs font-bold px-3 py-2 rounded-xl border border-zinc-800 transition" title="Eliminar registro">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
@@ -1257,12 +1268,12 @@
         function actualizarEstadoRed() {
             const badge = document.getElementById("networkBadge");
             if (navigator.onLine) {
-                badge.className = "text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
-                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> En línea`;
+                badge.className = "text-xs px-2.5 py-1 rounded-full font-semibold flex items-center gap-1.5 bg-zinc-800 text-yellow-400 border border-yellow-400/30";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span> En línea`;
                 sincronizarPendientes();
             } else {
-                badge.className = "text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 bg-amber-500/20 text-amber-400 border border-amber-500/30";
-                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span> Sin internet`;
+                badge.className = "text-xs px-2.5 py-1 rounded-full font-semibold flex items-center gap-1.5 bg-zinc-950 text-zinc-400 border border-zinc-700";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-zinc-500"></span> Sin internet`;
             }
         }
 
